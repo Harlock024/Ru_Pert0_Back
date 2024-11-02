@@ -8,14 +8,13 @@ public class Task
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public double Duration { get; set; }
-    public double Cost  { get; set; }
     
     
     public double OptimisticTime { get; set; }
     public double MostLikelyTime { get; set; }
     public double PessimisticTime { get; set; }
 
-    public double CaculatePERT()
+    public double CalculatePERT()
     {
         return (OptimisticTime + 4 * MostLikelyTime +  PessimisticTime )/ 6;
     }

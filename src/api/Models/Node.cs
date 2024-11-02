@@ -3,6 +3,7 @@ namespace ru_pert0_back.api.Models;
 public class Node
 {
     public long Id { get; set; }
+    public string Name { get; set; }
     public long? ParentId { get; set; }    
     public Node Parent { get; set; } 
     public ICollection<Node> Children { get; set; }
