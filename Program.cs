@@ -1,8 +1,9 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Writers;
+using Microsoft.IdentityModel.Tokens;
 using ru_pert0_back.api.Context;
-using ru_pert0_back.api.Models;
-using Task = ru_pert0_back.api.Models.Task;
+using ru_pert0_back.api.Customs;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -12,6 +13,27 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
+builder.Services.AddSingleton<Utils>();
+
+builder.Services.AddAuthentication(config =>
+{
+    config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(config =>
+{
+    config.RequireHttpsMetadata = false;
+    config.SaveToken = true;
+    config.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = false,
+        ClockSkew = TimeSpan.Zero,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:key"]!))
+    };
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -19,50 +41,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.MapGet("/", () => "Ru_Pert0_Back Project");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    
-    var user = new User { Username = "johndoe", Password = "hashedPassword", Email = "john@example.com" };
-    context.Users.Add(user);
-    context.SaveChanges();
-    var project = new Project { Name = "Project with Stages", UserId = user.Id, };
-    context.Projects.Add(project);
-    context.SaveChanges();
-    
-    var task = new Task
-    {
-        name = "Project with Stages",
-        Description = "Task Description",
-        Duration = 5,
-        OptimisticTime = 3,
-        MostLikelyTime = 5,
-        PessimisticTime = 8
-    };
-    var task2 = new Task
-    {
-        name = "Project with Stages2",
-        Description = "Task Description2",
-        Duration = 5,
-        OptimisticTime = 3,
-        MostLikelyTime = 5,
-        PessimisticTime = 8
-    };
-    context.Tasks.Add(task);
-    context.Tasks.Add(task2);
-    context.SaveChanges();
-    var rootNode = new Node { Name = "CEO", ProjectId = project.Id, TaskId = task.Id,};
-    var taskNode = new Node { Name = "manager", ProjectId = project.Id, TaskId = task2.Id,};
-    context.Nodes.Add(rootNode);
-    context.Nodes.Add(taskNode);
-    context.SaveChanges();
-    var pertEstimate = task.CalculatePERT();
-    Console.WriteLine($"Estimated PERT Duration: {pertEstimate}");
-}
 app.Run();
