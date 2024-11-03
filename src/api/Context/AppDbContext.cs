@@ -50,5 +50,4 @@ public partial class AppDbContext(DbContextOptions<AppDbContext> options) : DbCo
         });
     }
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
-    
 }
